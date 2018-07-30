@@ -1,0 +1,176 @@
+public class HashMap {
+    //hash map data structure is an array with linked list buckets for collisions
+    //default length of hash map array
+    int capacity = 5;
+    KeyValuePair[] objectArray = new KeyValuePair[capacity];
+    //tracks number of collisions
+    int collisionCount= 0;
+    //hash map rehashes if load factor is exceeded
+    //rehashing takes a lot of time and memory so we try to minimize this
+    double loadFactor = .75;
+    //compares to load factor to know when to re hash
+    double currentCapacity=collisionCount/capacity;
+    //optional constructor to customize initial capacity to minimize rehash
+    public HashMap(int initialCapacity) {
+        this.capacity = initialCapacity;
+    }
+    //default constructor
+    public HashMap(){
+
+    }
+//hash map object
+    class KeyValuePair{
+        Object key = null;
+        Object value = null;
+        KeyValuePair previous = null;
+        KeyValuePair next = null;
+        KeyValuePair(Object key, Object value) {
+            this.key = key;
+            this.value = value;
+        }
+
+    }
+//generates an index within the array based upon hash code
+    public int generateHashIndex(Object key){
+             //key can be integer or string, convert to string for hashcode
+             String keyString = key.toString();
+             int hashCode = keyString.hashCode();
+             int index = hashCode%capacity;
+        return index;
+    }
+    //put objects into linked lists for collisions
+    public void handleCollision(KeyValuePair keyValuePair, int index){
+        collisionCount++;
+        currentCapacity=collisionCount/capacity;
+        int linkedListNodeCount=0;
+        KeyValuePair temp = objectArray[index];
+        String keyString = keyValuePair.key.toString();
+        while(temp.next!= null) {
+            temp = temp.next;
+            String objectKeyString = temp.key.toString();
+            linkedListNodeCount++;
+            //if keys match, replace
+            if (keyString == objectKeyString) {
+                temp = keyValuePair;
+                System.out.println("Object replaced at linked list node " + linkedListNodeCount + " of bucket index " + index + " of hash map array");
+                return;
+                //if no match, continue checking down linked list
+            } else if (keyString != objectKeyString) {
+                continue;
+            }
+        }
+        //if no match, add to next null spot which is at end of linked list
+        temp.next=keyValuePair;
+        linkedListNodeCount++;
+        System.out.println("Object added at end of linked list node " + linkedListNodeCount + " of bucket index " + index + " of hash map array");
+        keyValuePair.previous = temp;
+
+    }
+
+    public void put(Object key, Object value){
+        KeyValuePair keyValuePair =  new KeyValuePair(key, value);
+       int index= generateHashIndex(key);
+        //if no collision, insert into null index
+        if(objectArray[index]==null){
+        objectArray[index]=keyValuePair;
+        System.out.println("Object added at index " + index + " of hash map array");
+        return;
+        }
+        //convert to strings to compare keys
+        String keyString = key.toString();
+        String objectKeyString = objectArray[index].key.toString();
+        if(objectArray[index]!=null && keyString == objectKeyString){
+           //if keys are equal, replace current object
+            objectArray[index]= keyValuePair;
+            System.out.println("Object replaced at index " + index + " of hash map array");
+        }
+        //if keys not equal, handle collision
+        else if(objectArray[index]!=null && keyString != objectKeyString ){
+            handleCollision(keyValuePair, index);
+            if(currentCapacity>loadFactor){
+                capacity = getNewCapacity();
+                rehash(capacity);
+            }
+        }
+
+    }
+
+    public int getNewCapacity(){
+        int newCapacity = capacity*2;
+        return newCapacity;
+    }
+//create hash map data structure with new capacity to rehash to minimize collisions
+    public void rehash(int capacity){
+        KeyValuePair[] tempArray = new KeyValuePair[capacity];
+        for (int i=0;i<objectArray.length;i++) {
+            if(objectArray[i]!=null){
+                int index= generateHashIndex(objectArray[i].key);
+                if(tempArray[index]==null){
+                    tempArray[index] = objectArray[i];
+                    return;
+                }
+                else if(tempArray[index]!=null){
+                    KeyValuePair temp = tempArray[index];
+                    String tempKeyString = temp.key.toString();
+                    String objectKeyString = objectArray[i].key.toString();
+                    if(tempKeyString  == objectKeyString ){
+                        //if keys are equal, replace current object
+                        tempArray[index]= objectArray[i];
+                        return;
+                    }
+                    while(temp.next!= null){
+                        temp=temp.next;
+                        if(tempKeyString  == objectKeyString ){
+                            //if keys are equal, replace current object
+                            tempArray[index]= objectArray[i];
+                            return;}
+                        }
+                        temp.next=objectArray[i];
+
+                    }
+
+                }
+
+
+            }
+        objectArray=tempArray;
+        }
+
+
+
+    public Object get(Object key){
+        Object value = null;
+        int index = generateHashIndex(key);
+        KeyValuePair keyValuePair = objectArray[index];
+        value = keyValuePair.value;
+        return value;
+    }
+
+
+    public static void main(String[] args) {
+
+        HashMap hashmap = new HashMap();
+        String name = "stephanie";
+        //test case for handle collisions method is to force collisions, make put method accept same index and comment out generate hashcode
+        //to test rehash method, increase collisions close to capacity so the ratio becomes greater than load factor
+        //hashmap.put(name, 12, 0);
+        //hashmap.put("stephani", 12, 0);
+        //hashmap.put("stephani", 12, 0);
+        //hashmap.put("stephan", 12, 0);
+        //hashmap.put("stephanik", 12, 0);
+        //hashmap.put("stephani", 12, 0);
+        //hashmap.put("stephani", 12, 0);
+        hashmap.put(name, 12);
+        hashmap.put("stephani", 12);
+        hashmap.put("stephani", 12);
+        hashmap.put("stephan", 12);
+        hashmap.put("stephanik", 12);
+        hashmap.put("stephani", 12);
+        hashmap.put("stephani", 12);
+        System.out.println(hashmap.get(name));
+
+
+    }
+
+
+}
